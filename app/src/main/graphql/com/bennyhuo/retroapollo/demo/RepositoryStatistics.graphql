@@ -1,0 +1,14 @@
+query RepositoryStatistics($repo: String!, $owner: String!){
+  repository(name: $repo, owner: $owner) {
+    stargazers{
+      totalCount
+    }
+    watchers{
+      totalCount
+    }
+    issues{
+      totalCount
+    }
+  }
+}
+

@@ -1,0 +1,15 @@
+query User($login: String!){
+  user(login: $login){
+    name
+    email
+    followers{
+      totalCount
+    }
+    following{
+      totalCount
+    }
+    repositories{
+      totalCount
+    }
+  }
+}
