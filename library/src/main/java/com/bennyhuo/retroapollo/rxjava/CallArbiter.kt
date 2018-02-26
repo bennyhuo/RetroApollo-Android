@@ -18,6 +18,7 @@ package com.bennyhuo.retroapollo.rxjava
 
 import com.apollographql.apollo.ApolloCall
 import com.apollographql.apollo.api.Response
+import com.apollographql.apollo.exception.ApolloException
 import rx.Producer
 import rx.Subscriber
 import rx.Subscription
@@ -28,9 +29,9 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * Created by benny on 8/6/17.
  */
-class CallArbiter<T>(val apolloCall: ApolloCall<T>, val subscriber: Subscriber<in Response<T>>): Subscription, Producer{
+class CallArbiter<T>(val apolloCall: ApolloCall<T>, val subscriber: Subscriber<in Response<T>>) : Subscription, Producer {
 
-    companion object{
+    companion object {
         private const val STATE_WAITING = 0
         private const val STATE_REQUESTED = 1
         private const val STATE_TERMINATED = 3
@@ -45,21 +46,24 @@ class CallArbiter<T>(val apolloCall: ApolloCall<T>, val subscriber: Subscriber<i
     }
 
     override fun request(n: Long) {
-        if(n == 0L) return
+        if (n == 0L) return
 
         while (true) {
             val state = atomicState.get()
             when (state) {
                 STATE_WAITING -> if (atomicState.compareAndSet(STATE_WAITING, STATE_REQUESTED)) {
-                    try {
-                        val response = apolloCall.execute()
-                        if(atomicState.compareAndSet(STATE_REQUESTED, STATE_TERMINATED)){
-                            deliverResponse(response)
+                    apolloCall.enqueue(object : ApolloCall.Callback<T>() {
+                        override fun onFailure(e: ApolloException) {
+                            Exceptions.throwIfFatal(e)
+                            emitError(e)
                         }
-                    }catch (e: Exception){
-                        Exceptions.throwIfFatal(e)
-                        emitError(e)
-                    }
+
+                        override fun onResponse(response: Response<T>) {
+                            if (atomicState.compareAndSet(STATE_REQUESTED, STATE_TERMINATED)) {
+                                deliverResponse(response)
+                            }
+                        }
+                    })
                     return
                 }
                 STATE_REQUESTED, STATE_TERMINATED -> return  // Nothing to do.

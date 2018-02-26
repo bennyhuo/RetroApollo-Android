@@ -33,3 +33,10 @@ dependencies {
 
     testCompile 'junit:junit:4.12'
 }
+
+//work around for apollo-android
+if (project.getGradle().startParameter.isOffline()) {
+    afterEvaluate {
+        tasks.installApolloCodegen.deleteAllActions()
+    }
+}

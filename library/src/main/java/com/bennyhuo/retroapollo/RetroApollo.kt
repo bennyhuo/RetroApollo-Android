@@ -16,8 +16,8 @@
 
 package com.bennyhuo.retroapollo
 
-import com.apollographql.apollo.ApolloClient
 import com.bennyhuo.retroapollo.utils.Utils
+import com.apollographql.apollo.ApolloClient
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy

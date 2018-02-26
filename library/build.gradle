@@ -3,10 +3,6 @@ apply plugin: 'com.apollographql.android'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 
-apply plugin: 'com.github.dcendents.android-maven'
-apply plugin: 'com.jfrog.bintray'
-
-
 android {
     compileSdkVersion 25
     buildToolsVersion "25.0.0"
@@ -41,7 +37,8 @@ dependencies {
     // explicitly depend on RxJava's latest version for bug fixes and new features.
     compile 'io.reactivex:rxjava:1.1.6'
 
-    compile 'com.apollographql.apollo:apollo-rx-support:0.4.0'
+    compile "com.apollographql.apollo:apollo-rx-support:$apollo_version"
+    compile "com.apollographql.apollo:apollo-runtime:$apollo_version"
 
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
@@ -52,84 +49,50 @@ dependencies {
 }
 
 
-def siteUrl = 'https://github.com/enbandari/RetroApollo-Android'      // Homepage URL of the library
-def gitUrl = 'https://github.com/enbandari/RetroApollo-Android.git'   // Git repository URL
-group = "com.bennyhuo"                                        // Maven Group ID for the artifact
-version = "0.1"
-ext.artifact = "retroapollo"
-
-Properties properties = new Properties()
-properties.load(project.rootProject.file('local.properties').newDataInputStream())
-
-bintray {
-    user = properties.getProperty("bintray.user")
-    key = properties.getProperty("bintray.apikey")
-
-    configurations = ['archives']
-    pkg {
-        repo = "bennyhuo"
-        name = "RetroApollo"
-        websiteUrl = siteUrl
-        vcsUrl = gitUrl
-        licenses = ["Apache-2.0"]
-        publish = true
-    }
-}
-
-install {
-    repositories.mavenInstaller {
-        // This generates POM.xml with proper parameters
-        pom {
-            project {
-                packaging 'aar'
-                groupId group
-                artifactId artifact
-
-                // Add your description here
-                name 'RetroApollo is a Retrofit like wrapper for Apollo-Android which makes you more easily to use GraphQL.'
-                url siteUrl
-
-                // Set your license
-                licenses {
-                    license {
-                        name 'The Apache Software License, Version 2.0'
-                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    }
-                }
-                developers {
-                    developer {
-                        id 'bennyhuo'
-                        name 'bennyhuo'
-                        email 'bennyhuo@kotliner.cn'
-                    }
-                }
-                scm {
-                    connection gitUrl
-                    developerConnection gitUrl
-                    url siteUrl
-
-                }
-            }
-        }
-    }
-}
-
-
 task sourcesJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs
     classifier = 'sources'
 }
 
 task javadoc(type: Javadoc) {
-    source = android.sourceSets.main.java.srcDirs
+    failOnError  false
+    options.encoding = 'UTF-8'
+    source = android.sourceSets.main.java.sourceFiles
     classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+    classpath += configurations.compile
 }
 
+// build a jar with javadoc
 task javadocJar(type: Jar, dependsOn: javadoc) {
     classifier = 'javadoc'
     from javadoc.destinationDir
 }
+
 artifacts {
-    archives javadocJar
     archives sourcesJar
+    archives javadocJar
+}
+
+//region bintray
+apply plugin: 'com.novoda.bintray-release'
+
+publish {
+    userOrg = project.userName
+    groupId = project.groupId
+    repoName = project.repoName
+    artifactId = 'retroapollo'
+    publishVersion = project.publishVersion
+    desc = project.desc//描述，不重要
+    website = project.website
+    bintrayUser = project.userName
+    bintrayKey = project.apiKey
+    dryRun = project.dryRun
+}
+//endregion
+
+//work around for apollo-android
+if (project.getGradle().startParameter.isOffline()) {
+    afterEvaluate {
+        tasks.installApolloCodegen.deleteAllActions()
+    }
 }

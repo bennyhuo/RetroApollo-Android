@@ -16,19 +16,24 @@
 
 package com.bennyhuo.retroapollo
 
+import com.apollographql.apollo.api.Query
 import com.bennyhuo.retroapollo.annotations.GraphQLQuery
 import com.bennyhuo.retroapollo.utils.Utils
 import com.bennyhuo.retroapollo.utils.error
-import com.apollographql.apollo.api.Query
 import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 
 /**
  * Created by benny on 8/5/17.
  */
-class ApolloServiceMethod<T: Any>(val retroApollo: RetroApollo, val method: Method, val buildBuilderMethod: Method, val buildQueryMethod: Method, val fieldSetters: List<Method>, val callAdapter: CallAdapter<Any, T>) {
+class ApolloServiceMethod<T: Any>(private val retroApollo: RetroApollo,
+                                  val method: Method,
+                                  private val buildBuilderMethod: Method,
+                                  private val buildQueryMethod: Method,
+                                  private val fieldSetters: List<Method>,
+                                  private val callAdapter: CallAdapter<Any, T>) {
 
-    class Builder(val retroApollo: RetroApollo, val method: Method) {
+    class Builder(private val retroApollo: RetroApollo, val method: Method) {
 
         private val callAdapter: CallAdapter<Any, Any>
 
@@ -61,18 +66,17 @@ class ApolloServiceMethod<T: Any>(val retroApollo: RetroApollo, val method: Meth
 
             //XXX.class
             buildBuilderMethod = dataType.enclosingClass.getDeclaredMethod("builder")
-            val builderClass = dataType.enclosingClass.declaredClasses.filter { it.simpleName == "Builder" }.first()
+            val builderClass = dataType.enclosingClass.declaredClasses.first { it.simpleName == "Builder" }
 
-            method.parameterAnnotations.zip(method.parameterTypes).mapTo(fieldSetters) {
-                paramPair ->
-                val annotation = paramPair.first.filter { it is GraphQLQuery }.first() as GraphQLQuery
-                builderClass.getDeclaredMethod(annotation.value, paramPair.second)
+            method.parameterAnnotations.zip(method.parameterTypes).mapTo(fieldSetters) { (first, second) ->
+                val annotation = first.first { it is GraphQLQuery } as GraphQLQuery
+                builderClass.getDeclaredMethod(annotation.value, second)
             }
 
             buildQueryMethod = builderClass.getDeclaredMethod("build")
         }
 
-        fun build() = ApolloServiceMethod<Any>(retroApollo, method, buildBuilderMethod, buildQueryMethod, fieldSetters, callAdapter)
+        fun build() = ApolloServiceMethod(retroApollo, method, buildBuilderMethod, buildQueryMethod, fieldSetters, callAdapter)
     }
 
     operator fun invoke(args: Array<Any>?): T{
