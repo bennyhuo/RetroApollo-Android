@@ -1,5 +1,67 @@
 # RetroApollo-Android
-Apollo-Android wrapper like Retrofit for easy use.
+[Apollo-Android](https://github.com/apollographql/apollo-android) wrapper like Retrofit for easy use.
+
+## Example
+
+This is based on [Apollo-Android](https://github.com/apollographql/apollo-android), so you should config graphql api as what we do in Apollo-Android.
+
+ Suppose we have graphql request below:
+
+ ```
+ query RepositoryStatistics($repo: String!, $owner: String!){
+   repository(name: $repo, owner: $owner) {
+     stargazers{
+       totalCount
+     }
+     watchers{
+       totalCount
+     }
+     issues{
+       totalCount
+     }
+   }
+ }
+ ```
+
+We can then create an interface like this:
+
+```kotlin
+interface GraphQLService {
+    fun repositoryStatisticsQuery(@GraphQLQuery("owner") owner: String, @GraphQLQuery("repo") repo: String): Observable<Data>
+}
+```
+
+Just like what we do in retrofit, create an instance of interface by RetroApollo.Builder:
+
+```
+val apolloClient by lazy {
+
+//Build the Apollo Client
+    ApolloClient.builder()
+            .okHttpClient(OkHttpClient.Builder().addInterceptor(AuthInterceptor()).build())
+            .serverUrl("https://api.github.com/graphql")
+            .build()
+}
+
+val graphQLService by lazy {
+    RetroApollo.Builder()
+            .apolloClient(apolloClient)
+            .addCallAdapterFactory(RxJavaCallAdapterFactory()
+                    .observableScheduler(AndroidSchedulers.mainThread())
+                    .subscribeScheduler(Schedulers.io()))
+            .build()
+            .createGraphQLService(GraphQLService::class)
+}
+```
+
+That's it! Now we can make request like this:
+
+```kotlin
+graphQLService.repositoryStatisticsQuery("enbandari", "RetroApollo")
+            .subscribe {
+                ...
+            }
+```
 
 # License
 
