@@ -1,6 +1,12 @@
 # RetroApollo-Android
 [Apollo-Android](https://github.com/apollographql/apollo-android) wrapper like Retrofit for easy use.
 
+Tested on Apollo-Android 0.4.2. It has been deployed to jCenter: 
+
+```groovy
+api "com.bennyhuo.retroapollo:retroapollo:0.4.2-beta"
+```
+
 ## Example
 
 This is based on [Apollo-Android](https://github.com/apollographql/apollo-android), so you should config graphql api as what we do in Apollo-Android.
