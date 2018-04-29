@@ -14,19 +14,10 @@
  * limitations under the License.
  */
 
-package com.bennyhuo.retroapollo.annotations;
+package com.bennyhuo.retroapollo.annotations
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import kotlin.annotation.AnnotationRetention.RUNTIME
 
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
-@Documented
-@Target(PARAMETER)
+@Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(RUNTIME)
-public @interface GraphQLQuery {
-  /** The query parameter name. */
-  String value();
-}
+annotation class GraphQLQuery(val value: String)

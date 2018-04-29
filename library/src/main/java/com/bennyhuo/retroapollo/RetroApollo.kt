@@ -16,8 +16,9 @@
 
 package com.bennyhuo.retroapollo
 
-import com.bennyhuo.retroapollo.utils.Utils
 import com.apollographql.apollo.ApolloClient
+import com.bennyhuo.retroapollo.CallAdapter.Factory
+import com.bennyhuo.retroapollo.utils.Utils
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
@@ -38,10 +39,7 @@ class RetroApollo private constructor(val apolloClient: ApolloClient, val callAd
             return this
         }
 
-        private val callAdapterFactories = ArrayList<CallAdapter.Factory>().apply {
-            //内置
-            add(ApolloCallAdapterFactory())
-        }
+        private val callAdapterFactories = arrayListOf<Factory> (ApolloCallAdapterFactory())
 
         fun addCallAdapterFactory(callAdapterFactory: CallAdapter.Factory): Builder {
             callAdapterFactories.add(callAdapterFactory)
@@ -55,9 +53,9 @@ class RetroApollo private constructor(val apolloClient: ApolloClient, val callAd
 
     private val serviceMethodCache = ConcurrentHashMap<Method, ApolloServiceMethod<*>>()
 
-    fun <T : Any> createGraphQLService(apiInf: KClass<T>): T {
-        Utils.validateServiceInterface<T>(apiInf.java)
-        return Proxy.newProxyInstance(apiInf.java.classLoader, arrayOf<Class<T>>(apiInf.java),
+    fun <T : Any> createGraphQLService(serviceClass: KClass<T>): T {
+        Utils.validateServiceInterface<T>(serviceClass.java)
+        return Proxy.newProxyInstance(serviceClass.java.classLoader, arrayOf<Class<T>>(serviceClass.java),
                 object : InvocationHandler {
                     @Throws(Throwable::class)
                     override fun invoke(proxy: Any, method: Method, args: Array<Any>?): Any {
@@ -76,7 +74,7 @@ class RetroApollo private constructor(val apolloClient: ApolloClient, val callAd
         if (serviceMethod == null) {
             synchronized(serviceMethodCache) {
                 serviceMethod = serviceMethodCache[method] ?: ApolloServiceMethod.Builder(this, method).build()
-                serviceMethodCache[method] = serviceMethod!!
+                        .also { serviceMethodCache[method] = it }
             }
         }
         return serviceMethod!!
