@@ -61,10 +61,15 @@ class ApolloServiceMethod<T: Any>(private val retroApollo: RetroApollo,
 
             callAdapter = retroApollo.getCallAdapter(returnType) ?: throw IllegalStateException("$returnType is not supported.")
 
-            // XXX.Data.class
+            // XXXQuery.Data.class
             val dataType = callAdapter.responseType() as Class<*>
 
-            //XXX.class
+            //XXXQuery.class
+            /*
+                public static Builder builder() {
+                    return new Builder();
+                }
+             */
             buildBuilderMethod = dataType.enclosingClass.getDeclaredMethod("builder")
             val builderClass = dataType.enclosingClass.declaredClasses.first { it.simpleName == "Builder" }
 

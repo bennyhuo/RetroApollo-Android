@@ -16,13 +16,13 @@
 
 package com.bennyhuo.retroapollo.rxjava
 
-import com.bennyhuo.retroapollo.CallAdapter
-import com.bennyhuo.retroapollo.CallAdapter.Factory
-import com.bennyhuo.retroapollo.rxjava.RxReturnType.*
-import com.bennyhuo.retroapollo.utils.Utils
 import com.apollographql.apollo.ApolloCall
 import com.apollographql.apollo.api.Response
-import rx.Completable
+import com.bennyhuo.retroapollo.CallAdapter
+import com.bennyhuo.retroapollo.CallAdapter.Factory
+import com.bennyhuo.retroapollo.rxjava.RxReturnType.OBSERVABLE
+import com.bennyhuo.retroapollo.rxjava.RxReturnType.SINGLE
+import com.bennyhuo.retroapollo.utils.Utils
 import rx.Observable
 import rx.Scheduler
 import rx.Single
@@ -33,7 +33,7 @@ import java.lang.reflect.Type
  * Created by benny on 8/5/17.
  */
 enum class RxReturnType {
-    OBSERVABLE, SINGLE, COMPLETABLE
+    OBSERVABLE, SINGLE
 }
 
 class RxJavaCallAdapter<T>(val rxReturnType: RxReturnType,
@@ -65,7 +65,6 @@ class RxJavaCallAdapter<T>(val rxReturnType: RxReturnType,
         return when (rxReturnType) {
             OBSERVABLE -> observable
             SINGLE -> observable.toSingle()
-            COMPLETABLE -> observable.toCompletable()
         }
     }
 }
@@ -97,7 +96,6 @@ class RxJavaCallAdapterFactory : Factory() {
         }
         val rxReturnType = when (rawType) {
             Single::class.java -> SINGLE
-            Completable::class.java -> COMPLETABLE
             Observable::class.java -> OBSERVABLE
             else -> null
         } ?: return null

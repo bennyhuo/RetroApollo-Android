@@ -55,16 +55,15 @@ class RetroApollo private constructor(val apolloClient: ApolloClient, val callAd
 
     fun <T : Any> createGraphQLService(serviceClass: KClass<T>): T {
         Utils.validateServiceInterface<T>(serviceClass.java)
-        return Proxy.newProxyInstance(serviceClass.java.classLoader, arrayOf<Class<T>>(serviceClass.java),
+        return Proxy.newProxyInstance(serviceClass.java.classLoader, arrayOf(serviceClass.java),
                 object : InvocationHandler {
                     @Throws(Throwable::class)
                     override fun invoke(proxy: Any, method: Method, args: Array<Any>?): Any {
-                        if (method.declaringClass == Any::class.java || method.declaringClass == Object::class.java) {
+                        if (method.declaringClass == Any::class.java) {
                             return method.invoke(this, args)
                         }
 
-                        val serviceMethod = loadServiceMethod(method)
-                        return serviceMethod(args)
+                        return loadServiceMethod(method)(args)
                     }
                 }) as T
     }
